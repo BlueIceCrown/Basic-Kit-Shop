@@ -1,0 +1,71 @@
+{
+    "format_version": 2,
+    "metadata": {
+        "authors": [
+            "Bluey"
+        ],
+        "generated_with": {
+            "bridge": [
+                "2.7.42"
+            ],
+            "dash": [
+                "0.11.7"
+            ]
+        }
+    },
+    "header": {
+        "name": "§dBasic Shop UI",
+        "description": "Made by BlueIceCrown. (8/16/26)",
+        "min_engine_version": [
+            1,
+            20,
+            0
+        ],
+        "uuid": "92493c60-66ea-4498-b9cf-1fb56d6e7065",
+        "version": [
+            1,
+            0,
+            0
+        ]
+    },
+    "modules": [
+        {
+            "type": "data",
+            "uuid": "c41b63b0-cbd3-4f4e-bed7-7522995b4982",
+            "version": [
+                1,
+                0,
+                0
+            ]
+        },
+        {
+            "type": "script",
+            "language": "javascript",
+            "uuid": "cff224da-3321-40e6-a29e-d2ed7cb01e76",
+            "entry": "scripts/main.js",
+            "version": [
+                1,
+                0,
+                0
+            ]
+        }
+    ],
+    "dependencies": [
+        {
+            "module_name": "@minecraft/server-admin",
+            "version": "beta"
+        },
+        {
+            "module_name": "@minecraft/server",
+            "version": "beta"
+        },
+        {
+            "module_name": "@minecraft/server-gametest",
+            "version": "beta"
+        },
+        {
+            "module_name": "@minecraft/server-ui",
+            "version": "beta"
+        }
+    ]
+}

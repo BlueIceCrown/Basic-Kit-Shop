@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "@minecraft/server": "^2.9.0",
+    "@minecraft/server-admin": "^1.0.0-beta.11940b24",
+    "@minecraft/server-gametest": "^1.0.0-beta.1.21.60-preview.24",
+    "@minecraft/server-net": "^1.0.0-beta.11940b24",
+    "@minecraft/server-ui": "^2.1.0",
+    "@minecraft/vanilla-data": "^1.26.44"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "typescript": "^7.0.2"
+  },
+  "scripts": {
+    "watch": "bunx tsc --watch"
+  }
+}
