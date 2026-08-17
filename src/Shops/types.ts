@@ -3,8 +3,9 @@ export interface ShopItem {
         typeId: string;
         displayName?: string;
         amount?: number;
+        price: number;
+        currency?: string | 'Money'
     };
-
     info: {
         desc: string | null;
         icon?: string;
