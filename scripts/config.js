@@ -39,9 +39,10 @@ const config = {
             items: [
                 // you can define a display name for the item for the item if you'd like (otherwise it will fall back to turning the typeId into a display name.)
                 // you an also specify an amount if you wanna sell more than 1 of the item at a time.
-                { item: { typeId: 'custom:ultrate_kit', displayName: 'Ultrate Kit', amount: 1 }, info: { desc: null, icon: "textures/items/leather_chestplate" } },
-                { item: { typeId: 'custom:basic_kit' }, info: { desc: null, icon: "textures/items/leather_chestplate" } },
-                { item: { typeId: 'custom:advanced_kit' }, info: { desc: null, icon: "textures/items/leather_chestplate" } },
+                // you can also specify the type of currency which is just a scoreboard.
+                { item: { typeId: 'custom:ultrate_kit', displayName: 'Ultrate Kit', amount: 1, price: 100, currency: "Money" }, info: { desc: null, icon: "textures/items/leather_chestplate" } },
+                { item: { typeId: 'custom:basic_kit', price: 500 }, info: { desc: null, icon: "textures/items/leather_chestplate" } },
+                { item: { typeId: 'custom:advanced_kit', price: 750 }, info: { desc: null, icon: "textures/items/leather_chestplate" } },
             ]
         },
         chainmailKitsShop: {
@@ -49,9 +50,9 @@ const config = {
             desc: 'Here you can buy the following kits below.',
             icon: 'textures/items/chainmail_chestplate',
             items: [
-                { item: { typeId: 'custom:fighter_kit' }, info: { desc: null, icon: "textures/items/chainmail_chestplate" } },
-                { item: { typeId: 'custom:warrior_kit' }, info: { desc: null, icon: "textures/items/chainmail_chestplate" } },
-                { item: { typeId: 'custom:champion_kit' }, info: { desc: null, icon: "textures/items/chainmail_chestplate" } },
+                { item: { typeId: 'custom:fighter_kit', price: 1000 }, info: { desc: null, icon: "textures/items/chainmail_chestplate" } },
+                { item: { typeId: 'custom:warrior_kit', price: 2000 }, info: { desc: null, icon: "textures/items/chainmail_chestplate" } },
+                { item: { typeId: 'custom:champion_kit', price: 2500 }, info: { desc: null, icon: "textures/items/chainmail_chestplate" } },
             ]
         },
         ironKitsShop: {
@@ -59,9 +60,9 @@ const config = {
             desc: 'Here you can buy the following kits below.',
             icon: 'textures/items/iron_chestplate',
             items: [
-                { item: { typeId: 'custom:outstander_kit' }, info: { desc: null, icon: "textures/items/iron_chestplate" } },
-                { item: { typeId: 'custom:elite_kit' }, info: { desc: null, icon: "textures/items/iron_chestplate" } },
-                { item: { typeId: 'custom:legendary_kit' }, info: { desc: null, icon: "textures/items/iron_chestplate" } },
+                { item: { typeId: 'custom:outstander_kit', price: 3000 }, info: { desc: null, icon: "textures/items/iron_chestplate" } },
+                { item: { typeId: 'custom:elite_kit', price: 5000 }, info: { desc: null, icon: "textures/items/iron_chestplate" } },
+                { item: { typeId: 'custom:legendary_kit', price: 7500 }, info: { desc: null, icon: "textures/items/iron_chestplate" } },
             ]
         },
         diamondKitsShop: {
@@ -69,9 +70,9 @@ const config = {
             desc: 'Here you can buy the following kits below.',
             icon: 'textures/items/diamond_chestplate',
             items: [
-                { item: { typeId: 'custom:powerhouse_kit' }, info: { desc: null, icon: "textures/items/diamond_chestplate" } },
-                { item: { typeId: 'custom:ranger_kit' }, info: { desc: null, icon: "textures/items/diamond_chestplate" } },
-                { item: { typeId: 'custom:ultimate_kit' }, info: { desc: null, icon: "textures/items/diamond_chestplate" } },
+                { item: { typeId: 'custom:powerhouse_kit', price: 10000 }, info: { desc: null, icon: "textures/items/diamond_chestplate" } },
+                { item: { typeId: 'custom:ranger_kit', price: 20000 }, info: { desc: null, icon: "textures/items/diamond_chestplate" } },
+                { item: { typeId: 'custom:ultimate_kit', price: 30000 }, info: { desc: null, icon: "textures/items/diamond_chestplate" } },
             ]
         },
         timedShop: {

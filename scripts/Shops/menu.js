@@ -1,5 +1,6 @@
 import { ActionFormData } from "@minecraft/server-ui";
 import config from "../config";
+import { ShopManager } from "./manager";
 export function mainShop(player) {
     const form = new ActionFormData();
     form.title("Main Shop");
@@ -13,6 +14,6 @@ export function mainShop(player) {
         const selectedCategory = Object.values(config.shops)[response.selection];
         if (!selectedCategory)
             return;
-        //blah
+        ShopManager.assembleShop(selectedCategory, player, mainShop);
     });
 }
