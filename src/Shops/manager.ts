@@ -76,7 +76,7 @@ class ShopManager {
 
                 const slider = response.formValues[0] as number;
                 if (slider < 1 || slider > (64)) {
-                    player.sendMessage(`§cPurchase cancelled.Invalid amount.`);
+                    player.sendMessage(`§cPurchase cancelled. Invalid amount.`);
                     return;
                 }
                 const success = this.handlePurchase(player, s, slider, currency);
@@ -88,14 +88,16 @@ class ShopManager {
         const totalCost = item.item.price * amount;
         const playerBalance = player.stats.get(currency)
         if (playerBalance < totalCost) {
-            player.sendMessage(`§cPurchase cancelled.Insufficient funds.`);
+            player.sendMessage(`§cPurchase cancelled. Insufficient funds.`);
             return false;
         }
         player.stats.remove(currency, totalCost)
         this.giveItem(player, item, amount);
         player.sendMessage(`§aPurchase successful!`);
+        player.playSound('random.levelup')
         return true;
     }
+    // timed shop
     static giveItem(player: Player, item: ShopEntry, amount: number): void {
         player.give(item.item.typeId, amount);
     }

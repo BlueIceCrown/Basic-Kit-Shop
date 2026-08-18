@@ -44,8 +44,8 @@ function giveKit(player: Player, kit: Kit) {
 export function assembleItem(itemData: KitItem, fallbackEnchants: KitEnchantment[] = [], displayName?: string): ItemStack {
     const item = new ItemStack(itemData.typeId, itemData.amount ?? 1);
 
-    // Item Name
-    if (displayName) {
+    // Item Name (only if the item is not stackable)
+    if (displayName && !item.isStackable) {
         item.nameTag = `§r${displayName}`;
     }
 

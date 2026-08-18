@@ -44,7 +44,7 @@ const config = {
             items: [
                 // you can define a display name for the item for the item if you'd like (otherwise it will fall back to turning the typeId into a display name.)
                 // you an also specify an amount if you wanna sell more than 1 of the item at a time.
-                // you can also specify the type of currency which is just a scoreboard.
+                // you can also specify the type of currency which is just a dynamic property.
                 { item: { typeId: 'custom:ultrate_kit', displayName: 'Ultrate Kit', amount: 1, price: 100, currency: "Money" }, info: { desc: null, icon: "textures/items/leather_chestplate" } },
                 { item: { typeId: 'custom:basic_kit', price: 500 }, info: { desc: null, icon: "textures/items/leather_chestplate" } },
                 { item: { typeId: 'custom:advanced_kit', price: 750 }, info: { desc: null, icon: "textures/items/leather_chestplate" } },
