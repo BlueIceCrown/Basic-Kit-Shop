@@ -1,4 +1,5 @@
 # Basic-Kit-Shop
+![Last Commit](https://img.shields.io/github/last-commit/BlueIceCrown/Basic-Kit-Shop)
 A basic Minecraft Bedrock Shop UI with templates for custom kits as well as a config designed around what items they give.
 
 # How it works
