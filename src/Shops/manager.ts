@@ -1,9 +1,11 @@
-import { Container, ItemStack, type Player } from "@minecraft/server";
+import { Container, ItemStack, world, type Player } from "@minecraft/server";
 import { ActionFormData, ModalFormData, uiManager } from "@minecraft/server-ui";
 import config from "../config";
-import type { Shop, ShopEntry, ShopItem } from "./types";
+import Timer, { type TimerObject } from "../Timer";
+import type { ActiveTimedShopItem, Shop, ShopEntry, ShopExpiryTime, ShopItem, TimedShop, TimedShopState } from "./types";
 
 class ShopManager {
+    private static timedShopStock: ActiveTimedShopItem[] = [];
     // normal static shop
     static assembleShop(shop: Shop, player: Player, callback?: any): void {
         const items: ShopEntry[] = shop.items;
@@ -27,93 +29,299 @@ class ShopManager {
                 }
                 return;
             }
-            const s = items[result.selection] as ShopItem
-            const currency = s.item.currency ?? "Money";
-            const price = s.item.price ?? 1;
-            const playerCurrency = player.stats.get(currency);
-            let itemInfo = `${s.info.desc ? `${s.info.desc}\n` : ``}§iPrice: §7${playerCurrency}/§a$${price} ${s.item.currency ?? 'Money'}`
-            // display the enchants
-            if (isKit(s.item.typeId)) {
-                const kits = Object.values(config.kits).flat();
-                const kitEntry = kits.find(kit => kit.itemName === s.item.typeId);
-                if (kitEntry) {
-                    for (const item of kitEntry.items) {
-                        // Item-specific enchants override static enchants
-                        const enchants = item.enchantments ?? kitEntry.staticEnchants ?? []
-                        if (!item.enchantments || item.enchantments.length === 0) continue;
-                        itemInfo += `\n\n§sSpecific Enchantments: \n`
-                        itemInfo += `\n§f${convertName(item.typeId)
-                            }`;
+            const selected = items[result.selection]
+            this.showPurchaseForm(player, selected);
+        })
+    }
+    //universal purchase form for all shops, timed or not.
+    static showPurchaseForm(player: Player, item: ShopItem, maxPurchases?: number, name?: string): void {
+        const currency = item.item.currency ?? "Money";
+        const price = item.item.price ?? 1;
+        const playerCurrency = player.stats.get(currency);
+        const amountPerPurchase = item.item.amount ?? 1;
+        const template = new ItemStack(item.item.typeId, 1);
+        let itemInfo = `${item.info.desc ? `${item.info.desc}\n` : ""}§iPrice: §7${playerCurrency}/§a$${price} ${currency}`;
 
-                        for (const enchant of enchants) {
-                            itemInfo += `\n§7${convertName(enchant.id)} ${numberToRoman(enchant.level)} `;
-                        }
+        // Kit enchantment information
+        if (isKit(item.item.typeId)) {
+            const kits = Object.values(config.kits).flat();
+            const kitEntry = kits.find(kit => kit.itemName === item.item.typeId);
+            if (kitEntry) {
+                for (const kitItem of kitEntry.items) {
+                    if (!kitItem.enchantments || kitItem.enchantments.length === 0) continue;
+
+                    itemInfo += `\n\n§sSpecific Enchantments:`;
+                    itemInfo += `\n§f${convertName(kitItem.typeId)}`;
+
+                    for (const enchant of kitItem.enchantments) {
+                        itemInfo += `\n§7${convertName(enchant.id)} ${numberToRoman(enchant.level)}`;
                     }
-                    // normal static enchants
-                    itemInfo += `\n\n§r§bEnchantments: \n`;
-                    const staticEnch = kitEntry.staticEnchants ?? []
-                    for (const enchant of staticEnch) {
-                        itemInfo += `\n§7${convertName(enchant.id)} ${numberToRoman(enchant.level)} `;
+                }
+
+                const staticEnchants = kitEntry.staticEnchants ?? [];
+
+                if (staticEnchants.length > 0) {
+                    itemInfo += `\n\n§r§bEnchantments:`;
+
+                    for (const enchant of staticEnchants) {
+                        itemInfo += `\n§7${convertName(enchant.id)} ${numberToRoman(enchant.level)}`;
                     }
                 }
             }
-            // this is to measure how much can fit in the players inventory if it is too full.
-            const amountPerPurchase = s.item.amount ?? 1;
-            const template = new ItemStack(s.item.typeId, 1);
-            const itemCapacity = getItemCapacity(player.inventory, template);
-            const maxByInventory = Math.floor(itemCapacity / amountPerPurchase);
-            const maxAffordable = price > 0 ? Math.floor(playerCurrency / price) : 64;
-            const shopMax = 64;
-            const maxPurchaseAmount = Math.min(maxAffordable, shopMax, maxByInventory);
-            // get the players current currency (or money) and set a number to the amount the player can actually buy.
-            const menu2 = new ModalFormData();
-            menu2.title(`§l§d${s.item.displayName ?? convertName(s.item.typeId)}`);
-            menu2.slider(`§i${itemInfo}
+        }
+        // Figure out how many purchases can fit
+        const itemCapacity = getItemCapacity(player.inventory, template);
+        const maxByInventory = Math.floor(itemCapacity / amountPerPurchase);
+        const maxAffordable = price > 0 ? Math.floor(playerCurrency / price) : 64;
+        const maxPurchaseAmount = Math.min(maxAffordable, maxByInventory, maxPurchases ?? 64);
+
+        if (maxPurchaseAmount <= 0) {
+            player.sendMessage(`§cYou cannot purchase this item right now, Check your balance and inventory space.`);
+            player.playSound("note.bass");
+            return;
+        }
+        const displayName = item.item.displayName ?? convertName(item.item.typeId);
+        // Stackable item (slider)
+        if (template.maxAmount > 1) {
+            const form = new ModalFormData();
+            form.title(`§l§d${displayName}`);
+            form.slider(`§i${itemInfo}
 
 §r§7Amount to purchase`, 1, maxPurchaseAmount, { valueStep: 1 });
-            menu2.submitButton(`§qPurchase §8${s.item.displayName ?? convertName(s.item.typeId)} `);
-            menu2.show(player).then((response) => {
+            form.submitButton(`§qPurchase §8${displayName}`);
+            form.show(player).then(response => {
                 uiManager.closeAllForms(player);
-                if (response.canceled || !response.formValues) {
-                    ShopManager.assembleShop(shop, player, callback)
+
+                if (response.canceled || !response.formValues) return;
+
+                const amount = response.formValues[0] as number;
+
+                if (amount < 1 || amount > maxPurchaseAmount) {
+                    player.sendMessage("§cPurchase cancelled. Invalid amount.");
                     return;
                 }
-                if (player.inventory.isFull()) {
-                    player.sendMessage(`§cPurchase failed. Your inventory is full.`);
-                    return;
-                }
-                const slider = response.formValues[0] as number;
-                if (slider < 1 || slider > (64)) {
-                    player.sendMessage(`§cPurchase cancelled. Invalid amount.`);
-                    return;
-                }
-                const success = this.handlePurchase(player, s, slider, currency);
-                if (!success) return;
+
+                this.handlePurchase(player, item, amount, currency, name);
             });
-        })
+            return;
+        }
+        // non-stackable item 
+        const form = new ActionFormData();
+        form.title(`§l§d${displayName}`);
+        form.body(`§i${itemInfo}
+
+§r§7Would you like to purchase this item?`);
+        form.button(`§qBuy ${displayName}\n§8$${price} ${currency}`);
+        form.show(player).then(response => {
+            uiManager.closeAllForms(player);
+            if (response.canceled || response.selection === undefined) return;
+            this.handlePurchase(player, item, 1, currency, name);
+        });
     }
-    static handlePurchase(player: Player, item: ShopEntry, amount: number, currency: string): boolean {
+    static handlePurchase(player: Player, item: ShopEntry, amount: number, currency: string, name?: string): boolean {
         const totalCost = item.item.price * amount;
-        const playerBalance = player.stats.get(currency)
+        const itemAmount = item.item.amount ?? 1;
+
+        const playerBalance = player.stats.get(currency);
+
         if (playerBalance < totalCost) {
-            player.sendMessage(`§cPurchase cancelled. Insufficient funds.`);
+            player.sendMessage("§cPurchase cancelled. Insufficient funds.");
             return false;
         }
-        player.stats.remove(currency, totalCost)
-        this.giveItem(player, item, item.item.amount * amount);
-        player.sendMessage(`§aPurchase successful!`);
-        player.playSound('random.levelup')
+
+        const currentCapacity = getItemCapacity(
+            player.inventory,
+            new ItemStack(item.item.typeId, 1)
+        );
+
+        if (currentCapacity < itemAmount * amount) {
+            player.sendMessage(
+                "§cPurchase cancelled. Your inventory is full."
+            );
+            return false;
+        }
+
+        // Timed shop: re-check CURRENT stock
+        if (name) {
+            const state = this.getTimedShopState(name);
+            if (!state) {
+                player.sendMessage(
+                    "§cPurchase cancelled. Timed shop data could not be found."
+                );
+                return false;
+            }
+            const storedItem = state.items.find(entry => entry.item.typeId === item.item.typeId);
+            if (!storedItem) {
+                player.sendMessage("§cPurchase cancelled. This item is no longer available.");
+                return false;
+            }
+
+            // This is the important stale-menu check
+            if (storedItem.currentStock < amount) {
+                player.sendMessage(`§cPurchase cancelled. Only ${storedItem.currentStock} left in stock.`);
+                return false;
+            }
+            storedItem.currentStock -= amount;
+            this.saveTimedShopState(state, name);
+        }
+        player.stats.remove(currency, totalCost);
+        this.giveItem(player, item, itemAmount * amount);
+        player.sendMessage("§aPurchase successful!");
+        player.playSound("random.levelup");
         return true;
     }
     // timed shop
-    static assembleTimedShop(shop: Shop, player: Player, callback?: any): void {
-        const items: ShopEntry[] = shop.items;
-        //blah blah blah
+    static assembleTimedShop(name: string, shop: TimedShop, player: Player, callback?: any): void {
+        let state = this.getTimedShopState(name);
+        // no saved shop yet
+        if (!state) {
+            state = this.rerollTimedShop(shop, name);
+        }
+        // saved shop expired
+        else if (Timer.hasExpired(state.timer)) {
+            state = this.rerollTimedShop(shop, name);
+        }
+        const items = state.items;
+        const remaining = Timer.remaining(state.timer);
+        const form = new ActionFormData();
+        form.title(`§l§d${shop.displayName ?? 'n/a'}`);
+        form.body(`${shop.desc}\n\n§iThis shop will reroll in §d${remaining.days}d ${remaining.hours}h ${remaining.minutes}m ${remaining.seconds}s`);
+
+        for (const entry of items) {
+            form.button(`§5${entry.item.displayName ?? convertName(entry.item.typeId)}${entry.item.amount > 1 ? ` §d[x${entry.item.amount}]` : ``} ${entry.currentStock > 0 ? `§8[Stock: §4${entry.currentStock}§8]` : `§4**Sold Out**`}
+§q$${entry.item.price} ${entry.item.currency ?? "Money"}`, entry.info.icon);
+        }
+
+        form.show(player).then((response) => {
+            if (response.canceled || response.selection === undefined) {
+                if (callback) return callback(player);
+            }
+            const selected = items[response.selection];
+            if (!selected) return;
+            this.showPurchaseForm(player, selected, selected.currentStock, name);
+        });
+    }
+    static removeTimedStock(itemIndex: number, amount: number, name: string): boolean {
+        const state = this.getTimedShopState(name);
+        if (!state) return false;
+        const item = state.items[itemIndex];
+        if (!item) return false;
+        if (item.currentStock < amount) {
+            return false;
+        }
+        item.currentStock -= amount;
+        this.saveTimedShopState(state, name);
+        return true;
     }
     // give the player the item they purchased
     static giveItem(player: Player, item: ShopEntry, amount: number): void {
         player.give(item.item.typeId, amount);
     }
+    static rerollTimedShop(shop: TimedShop, name: string): TimedShopState {
+        const availableItems = [...shop.items];
+
+        const itemCount = Math.min(
+            shop.itemCount ?? availableItems.length,
+            availableItems.length
+        );
+
+        const selectedItems: ActiveTimedShopItem[] = [];
+
+        for (let i = 0; i < itemCount; i++) {
+            const randomIndex = Math.floor(
+                Math.random() * availableItems.length
+            );
+
+            const [selected] = availableItems.splice(randomIndex, 1);
+
+            const minStock = selected.item.stock?.min ?? 1;
+            const maxStock = selected.item.stock?.max ?? minStock;
+
+            const currentStock = Math.floor(Math.random() * (maxStock - minStock + 1)) + minStock;
+
+            selectedItems.push({
+                ...selected,
+                item: {
+                    ...selected.item
+                },
+                info: {
+                    ...selected.info
+                },
+                currentStock
+            });
+        }
+
+        const state: TimedShopState = {
+            timer: createShopTimer(shop.expiryTime),
+            items: selectedItems
+        };
+
+        this.saveTimedShopState(state, name);
+
+        return state;
+    }
+    private static getTimedShopState(name: string): TimedShopState | null {
+        const raw = world.getDynamicProperty(name);
+
+        if (typeof raw !== "string") {
+            return null;
+        }
+
+        try {
+            return JSON.parse(raw) as TimedShopState;
+        } catch {
+            return null;
+        }
+    }
+
+    private static saveTimedShopState(state: TimedShopState, name: string): void {
+        world.setDynamicProperty(name, JSON.stringify(state));
+    }
+    static purchaseTimedItem(player: Player, item: ActiveTimedShopItem, amount: number): boolean {
+
+        if (item.currentStock < amount) {
+            player.sendMessage(`§cThere is not enough stock remaining.`)
+            return false;
+        }
+
+        const currency = item.item.currency ?? "Money";
+        const totalCost = item.item.price * amount;
+
+        if (player.stats.get(currency) < totalCost) {
+            player.sendMessage(`§cYou do not have enough ${currency}.`);
+
+            return false;
+        }
+
+        item.currentStock -= amount;
+
+        player.stats.remove(currency, totalCost);
+
+        player.give(item.item.typeId, (item.item.amount ?? 1) * amount);
+
+        return true;
+    }
+    static getTimedShopStock(): ActiveTimedShopItem[] {
+        return this.timedShopStock;
+    }
+}
+
+function createShopTimer(time: ShopExpiryTime): TimerObject {
+    let timer = Timer.set(time.days ?? 0, "days");
+
+    if (time.hours) {
+        timer = Timer.add(timer, time.hours, "hours");
+    }
+
+    if (time.mins) {
+        timer = Timer.add(timer, time.mins, "minutes");
+    }
+
+    if (time.seconds) {
+        timer = Timer.add(timer, time.seconds, "seconds");
+    }
+
+    return timer;
 }
 
 export function getItemCapacity(container: Container, item: ItemStack): number {
@@ -168,7 +376,8 @@ export function numberToRoman(num) {
 }
 
 function isKit(typeId: string): boolean {
-    if (typeId.endsWith('kit')) return true;
+    const kits = Object.values(config.kits).flat();
+    if (kits.find(kit => typeId === kit.itemName)) return true;
     return false
 }
 

@@ -2,7 +2,8 @@
 //hi mom
 
 import type { Player } from "@minecraft/server";
-import { mainShop } from "./Shops/menu";
+import { mainShop } from "./Shops/Main/menu";
+import type { TimedShop } from "./Shops/types";
 import type { KitConfig } from "./types";
 
 
@@ -80,10 +81,20 @@ const config = {
                 { item: { typeId: 'custom:ultimate_kit', price: 30000 }, info: { desc: null, icon: "textures/items/diamond_chestplate" } },
             ]
         },
-        timedShop: {
-            displayName: 'Timed Shop',
-            desc: 'Welcome'
-        }
+        limitedtimeShop: {
+            displayName: 'Limited Time Shop',
+            desc: 'Welcome to the limited time shop. Here are items that are sold for a limited time.',
+            icon: 'textures/ui/icon_blackfriday',
+            // The amount of items/kits too be sold at once when a shop rerolls.
+            itemCount: 5,
+            // The time needed until the shop rerolls.
+            expiryTime: { days: 1, hours: 0, minutes: 0, seconds: 0 },
+            items: [
+                // stock is how much of the item can be bought before its sold out. (min and max represent the random amount of stock the item can have when being put up in the shop.)
+                { item: { typeId: 'custom:powerhouse_kit', price: 5000, stock: { min: 1, max: 10 } }, info: { icon: "textures/items/diamond_chestplate" } },
+                { item: { typeId: 'custom:ranger_kit', price: 15000, stock: { min: 3, max: 5 } }, info: { icon: "textures/items/diamond_chestplate" } },
+            ]
+        } satisfies TimedShop
     },
     // The main kits object. This is based off of custom added items that are later right clicked to give the player a kit.
     kits: {

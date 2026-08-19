@@ -15,10 +15,7 @@ export interface Kit {
     itemName: string;
     displayName: string;
     desc?: string;
-
     staticEnchants?: KitEnchantment[];
-
     items: KitItem[];
 }
-
 ""
