@@ -30,11 +30,11 @@ class ShopManager {
                 return;
             }
             const selected = items[result.selection]
-            this.showPurchaseForm(player, selected);
+            this.showPurchaseForm(player, selected, null, null, callback);
         })
     }
     //universal purchase form for all shops, timed or not.
-    static showPurchaseForm(player: Player, item: ShopItem, maxPurchases?: number, name?: string): void {
+    static showPurchaseForm(player: Player, item: ShopItem, maxPurchases?: number, name?: string, callback?: any): void {
         const currency = item.item.currency ?? "Money";
         const price = item.item.price ?? 1;
         const playerCurrency = player.stats.get(currency);
@@ -74,12 +74,6 @@ class ShopManager {
         const maxByInventory = Math.floor(itemCapacity / amountPerPurchase);
         const maxAffordable = price > 0 ? Math.floor(playerCurrency / price) : 64;
         const maxPurchaseAmount = Math.min(maxAffordable, maxByInventory, maxPurchases ?? 64);
-
-        if (maxPurchaseAmount <= 0) {
-            player.sendMessage(`§cYou cannot purchase this item right now, Check your balance and inventory space.`);
-            player.playSound("note.bass");
-            return;
-        }
         const displayName = item.item.displayName ?? convertName(item.item.typeId);
         // Stackable item (slider)
         if (template.maxAmount > 1) {
@@ -92,11 +86,14 @@ class ShopManager {
             form.show(player).then(response => {
                 uiManager.closeAllForms(player);
 
-                if (response.canceled || !response.formValues) return;
-
+                if (response.canceled || !response.formValues) {
+                    if (callback) callback(player)
+                    return;
+                }
                 const amount = response.formValues[0] as number;
-
-                if (amount < 1 || amount > maxPurchaseAmount) {
+                // believe it or not, there are clients out there that can manipulate packets sent to forms. 
+                // players on cosier would use said clients to set the slider to a negative amount to actually duplicate money.
+                if (amount < 1) {
                     player.sendMessage("§cPurchase cancelled. Invalid amount.");
                     return;
                 }
@@ -114,11 +111,14 @@ class ShopManager {
         form.button(`§qBuy ${displayName}\n§8$${price} ${currency}`);
         form.show(player).then(response => {
             uiManager.closeAllForms(player);
-            if (response.canceled || response.selection === undefined) return;
+            if (response.canceled || !response.selection) {
+                if (callback) callback(player)
+                return;
+            }
             this.handlePurchase(player, item, 1, currency, name);
         });
     }
-    static handlePurchase(player: Player, item: ShopEntry, amount: number, currency: string, name?: string): boolean {
+    static handlePurchase(player: Player, item: ShopEntry, amount: number, currency = 'Money', name?: string): boolean {
         const totalCost = item.item.price * amount;
         const itemAmount = item.item.amount ?? 1;
 
@@ -128,26 +128,16 @@ class ShopManager {
             player.sendMessage("§cPurchase cancelled. Insufficient funds.");
             return false;
         }
-
-        const currentCapacity = getItemCapacity(
-            player.inventory,
-            new ItemStack(item.item.typeId, 1)
-        );
-
+        const currentCapacity = getItemCapacity(player.inventory, new ItemStack(item.item.typeId, 1));
         if (currentCapacity < itemAmount * amount) {
-            player.sendMessage(
-                "§cPurchase cancelled. Your inventory is full."
-            );
+            player.sendMessage("§cPurchase cancelled. Your inventory is full.");
             return false;
         }
-
         // Timed shop: re-check CURRENT stock
         if (name) {
             const state = this.getTimedShopState(name);
             if (!state) {
-                player.sendMessage(
-                    "§cPurchase cancelled. Timed shop data could not be found."
-                );
+                player.sendMessage("§cPurchase cancelled. Timed shop data could not be found.");
                 return false;
             }
             const storedItem = state.items.find(entry => entry.item.typeId === item.item.typeId);
@@ -155,8 +145,7 @@ class ShopManager {
                 player.sendMessage("§cPurchase cancelled. This item is no longer available.");
                 return false;
             }
-
-            // This is the important stale-menu check
+            // this is incase a player buys something while another is still on the menu, (tldr; to prevent people from buying more than the stock has)
             if (storedItem.currentStock < amount) {
                 player.sendMessage(`§cPurchase cancelled. Only ${storedItem.currentStock} left in stock.`);
                 return false;
@@ -166,7 +155,8 @@ class ShopManager {
         }
         player.stats.remove(currency, totalCost);
         this.giveItem(player, item, itemAmount * amount);
-        player.sendMessage("§aPurchase successful!");
+        player.sendMessage(`§aPurchase successful!
+§c-${totalCost} ${currency}`);
         player.playSound("random.levelup");
         return true;
     }
@@ -189,7 +179,7 @@ class ShopManager {
 
         for (const entry of items) {
             form.button(`§5${entry.item.displayName ?? convertName(entry.item.typeId)}${entry.item.amount > 1 ? ` §d[x${entry.item.amount}]` : ``} ${entry.currentStock > 0 ? `§8[Stock: §4${entry.currentStock}§8]` : `§4**Sold Out**`}
-§q$${entry.item.price} ${entry.item.currency ?? "Money"}`, entry.info.icon);
+§q$${entry.item.price} ${entry.item.currency ?? "Money"}`, entry.currentStock > 0 ? entry.info.icon : 'textures/blocks/barrier');
         }
 
         form.show(player).then((response) => {
@@ -198,7 +188,12 @@ class ShopManager {
             }
             const selected = items[response.selection];
             if (!selected) return;
-            this.showPurchaseForm(player, selected, selected.currentStock, name);
+            if (selected.currentStock <= 0) {
+                player.sendMessage(`§c${selected.item.displayName ?? convertName(selected.item.typeId)} is currently sold out.`)
+                player.playSound('random.anvil_land')
+                return;
+            }
+            this.showPurchaseForm(player, selected, selected.currentStock, name, callback);
         });
     }
     static removeTimedStock(itemIndex: number, amount: number, name: string): boolean {
@@ -261,7 +256,7 @@ class ShopManager {
         return state;
     }
     private static getTimedShopState(name: string): TimedShopState | null {
-        const raw = world.getDynamicProperty(name);
+        const raw = world.getDynamicProperty(`shop:${name}`);
 
         if (typeof raw !== "string") {
             return null;
@@ -275,7 +270,7 @@ class ShopManager {
     }
 
     private static saveTimedShopState(state: TimedShopState, name: string): void {
-        world.setDynamicProperty(name, JSON.stringify(state));
+        world.setDynamicProperty(`shop:${name}`, JSON.stringify(state));
     }
     static purchaseTimedItem(player: Player, item: ActiveTimedShopItem, amount: number): boolean {
 
