@@ -34,11 +34,11 @@ const config = {
             // The types of items being sold.
             items: [
                 // item definitions. pretty self explanatory, the "info" object is the info displayed on the form. (like the description of the item when buying, and the button icon.)
-                { item: { typeId: 'minecraft:diamond', amount: 10 }, info: { desc: null, icon: "textures/items/diamond" } }
+                { item: { typeId: 'minecraft:diamond', amount: 10, price: 100 }, info: { desc: null, icon: "textures/items/diamond" } }
             ]
         },
         leatherKitsShop: {
-            displayName: 'Leather Kits Shop',
+            displayName: 'Leather Kits',
             desc: 'Here you can buy the following kits below.',
             icon: 'textures/items/leather_chestplate',
             items: [
@@ -51,7 +51,7 @@ const config = {
             ]
         },
         chainmailKitsShop: {
-            displayName: 'Chainmail Kits Shop',
+            displayName: 'Chainmail Kits',
             desc: 'Here you can buy the following kits below.',
             icon: 'textures/items/chainmail_chestplate',
             items: [
@@ -61,7 +61,7 @@ const config = {
             ]
         },
         ironKitsShop: {
-            displayName: 'Iron Kits Shop',
+            displayName: 'Iron Kits',
             desc: 'Here you can buy the following kits below.',
             icon: 'textures/items/iron_chestplate',
             items: [
@@ -71,7 +71,7 @@ const config = {
             ]
         },
         diamondKitsShop: {
-            displayName: 'Diamond Kits Shop',
+            displayName: 'Diamond Kits',
             desc: 'Here you can buy the following kits below.',
             icon: 'textures/items/diamond_chestplate',
             items: [
@@ -111,7 +111,7 @@ const config = {
                         amount: 1,
                         // if you want lore for some reason
                         lore: [],
-                        // enchants! (vanilla ones ofc) specify if certain enchants need to be changed on a certain item.
+                        // enchants (vanilla ones ofc) specify if certain enchants need to be changed on a certain item.
                         enchantments: [
                             { id: "unbreaking", level: 1 },
                             { id: "mending", level: 1 },

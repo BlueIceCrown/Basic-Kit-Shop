@@ -2,12 +2,26 @@ import { Container, ItemStack, Player } from "@minecraft/server";
 import { DynamicPropertyManager } from "../Dynamic/manager";
 
 declare module "@minecraft/server" {
+    interface Container {
+        isFull(): boolean;
+    }
     interface Player {
         give(typeOrItem: string | ItemStack, quantity?: number, lore?: string[], itemLock?: boolean, space?: Container, preferredSlot?: number, keepOnDeath?: boolean): void;
         addItemToInv(item: ItemStack, space?: Container, preferredSlot?: number): void;
+        readonly inventory: Container | undefined;
         readonly stats: DynamicPropertyManager;
     }
 }
+
+Object.defineProperty(Player.prototype, "inventory", {
+    get(this: Player): Container | undefined {
+        return this.getComponent("minecraft:inventory").container!;
+    }
+});
+
+Container.prototype.isFull = function (): boolean {
+    return this.emptySlotsCount === 0;
+};
 
 Player.prototype.give = function (typeOrItem: string | ItemStack, quantity: number = 1, lore: string[] | undefined = undefined, itemLock: boolean = false, space: Container | undefined = undefined, preferredSlot: number | undefined = undefined, keepOnDeath: boolean = false): void {
     const inventory = space ?? this.getComponent("minecraft:inventory")?.container;
@@ -87,15 +101,11 @@ Player.prototype.addItemToInv = function (item: ItemStack, space: Container | un
         preferredSlot = inventory.firstEmptySlot();
     }
 
-    if (
-        preferredSlot !== undefined &&
-        preferredSlot !== -1 &&
-        inventory.getItem(preferredSlot) === undefined
-    ) {
+    if (preferredSlot !== undefined && preferredSlot !== -1 && inventory.getItem(preferredSlot) === undefined) {
         inventory.setItem(preferredSlot, item);
         return;
     }
-
+    // this is just part of my give prototype thats been used for cosier
     if (inventory.emptySlotsCount === 0) {
         this.dimension.spawnItem(item, this.location);
     } else {

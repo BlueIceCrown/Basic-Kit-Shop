@@ -6,10 +6,10 @@ import type { Shop } from "./types";
 
 export function mainShop(player: Player) {
     const form = new ActionFormData()
-    form.title("Main Shop")
-    form.body("Welcome to the main shop! Please select a category below to view the items available for purchase.")
+    form.title("§l§dMain Shop")
+    form.body("§iWelcome to the main shop! Please select a category below to view the items available for purchase.")
     for (const category of Object.values(config.shops) as Shop[]) {
-        form.button(category.displayName, category.icon)
+        form.button(`§5${category.displayName}\n§8Click to View`, category.icon)
     }
     form.show(player).then((response) => {
         if (!response) return;

@@ -45,7 +45,7 @@ export function assembleItem(itemData: KitItem, fallbackEnchants: KitEnchantment
     const item = new ItemStack(itemData.typeId, itemData.amount ?? 1);
 
     // Item Name (only if the item is not stackable)
-    if (displayName && !item.isStackable) {
+    if (displayName && item.maxAmount === 1) {
         item.nameTag = `§r${displayName}`;
     }
 
