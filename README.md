@@ -13,6 +13,8 @@ A basic Minecraft Bedrock Shop UI with templates for custom kits as well as a co
 
 Enter a world with Beta APIs enabled, and use "/function setup". It will spawn 2 NPCs which will display the shops.
 
-# Give yourself Money
+# Commands
 
-Simply do the command "/scriptevent shop:addmoney (your amount here)".
+/scriptevent shop:addmoney 1000
+/scriptevent shop:setmoney 1000
+/scriptevent shop:reroll

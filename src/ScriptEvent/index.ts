@@ -1,4 +1,4 @@
-import { Player, system } from "@minecraft/server";
+import { Player, system, world } from "@minecraft/server";
 
 system.afterEvents.scriptEventReceive.subscribe(async (event) => {
     const { sourceEntity: entity, id, message } = event;
@@ -21,6 +21,18 @@ system.afterEvents.scriptEventReceive.subscribe(async (event) => {
             const amount = parseInt(message) as number
             player.stats.set('Money', amount)
             player.sendMessage(`Set ${amount} Money.`)
+            break;
+        }
+        case 'shop:reroll': {
+            const player = entity as Player
+            const shopIds = world.getDynamicPropertyIds().filter(id => id.startsWith('shop:'))
+            for (const shopId of shopIds) {
+                const shopData = world.getDynamicProperty(shopId)
+                if (shopData) {
+                    world.setDynamicProperty(shopId, null)
+                }
+            }
+            player.sendMessage(`Rerolled all shops.`)
             break;
         }
     }

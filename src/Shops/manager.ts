@@ -15,7 +15,7 @@ class ShopManager {
         menu.body(`§i${shop.desc}`);
 
         for (const item of items) {
-            menu.button(`§5${item.item.displayName ?? convertName(item.item.typeId)}${item.item.amount > 1 ? ` §d[x${item.item.amount}]` : ``}\n§q[$${item.item.price ?? 1} ${item.item.currency ?? 'Money'}]`, item.info.icon);
+            menu.button(`§5${item.item.displayName ?? convertName(item.item.typeId)}${item.item.amount > 1 ? ` §u[x${item.item.amount}]` : ``}\n§q[$${item.item.price ?? 1} ${item.item.currency ?? 'Money'}]`, item.info.icon);
         }
         menu.show(player).then((result) => {
             uiManager.closeAllForms(player);
@@ -82,7 +82,7 @@ class ShopManager {
             form.slider(`§i${itemInfo}
 
 §r§7Amount to purchase`, 1, maxPurchaseAmount, { valueStep: 1 });
-            form.submitButton(`§qPurchase §8${displayName}`);
+            form.submitButton(playerCurrency >= price ? `§qPurchase §8${displayName}` : `§cInsufficient funds.`);
             form.show(player).then(response => {
                 uiManager.closeAllForms(player);
 
@@ -126,11 +126,13 @@ class ShopManager {
 
         if (playerBalance < totalCost) {
             player.sendMessage("§cPurchase cancelled. Insufficient funds.");
+            player.playSound('random.anvil_land')
             return false;
         }
         const currentCapacity = getItemCapacity(player.inventory, new ItemStack(item.item.typeId, 1));
         if (currentCapacity < itemAmount * amount) {
             player.sendMessage("§cPurchase cancelled. Your inventory is full.");
+            player.playSound('random.anvil_land')
             return false;
         }
         // Timed shop: re-check CURRENT stock
@@ -138,16 +140,19 @@ class ShopManager {
             const state = this.getTimedShopState(name);
             if (!state) {
                 player.sendMessage("§cPurchase cancelled. Timed shop data could not be found.");
+                player.playSound('random.anvil_land')
                 return false;
             }
             const storedItem = state.items.find(entry => entry.item.typeId === item.item.typeId);
             if (!storedItem) {
                 player.sendMessage("§cPurchase cancelled. This item is no longer available.");
+                player.playSound('random.anvil_land')
                 return false;
             }
             // this is incase a player buys something while another is still on the menu, (tldr; to prevent people from buying more than the stock has)
             if (storedItem.currentStock < amount) {
                 player.sendMessage(`§cPurchase cancelled. Only ${storedItem.currentStock} left in stock.`);
+                player.playSound('random.anvil_land')
                 return false;
             }
             storedItem.currentStock -= amount;
@@ -178,7 +183,7 @@ class ShopManager {
         form.body(`${shop.desc}\n\n§iThis shop will reroll in §d${remaining.days}d ${remaining.hours}h ${remaining.minutes}m ${remaining.seconds}s`);
 
         for (const entry of items) {
-            form.button(`§5${entry.item.displayName ?? convertName(entry.item.typeId)}${entry.item.amount > 1 ? ` §d[x${entry.item.amount}]` : ``} ${entry.currentStock > 0 ? `§8[Stock: §4${entry.currentStock}§8]` : `§4**Sold Out**`}
+            form.button(`§5${entry.item.displayName ?? convertName(entry.item.typeId)}${entry.item.amount > 1 ? ` §u[x${entry.item.amount}]` : ``} ${entry.currentStock > 0 ? `§8[Stock: §4${entry.currentStock}§8]` : `§4Sold Out`}
 §q$${entry.item.price} ${entry.item.currency ?? "Money"}`, entry.currentStock > 0 ? entry.info.icon : 'textures/blocks/barrier');
         }
 
@@ -223,17 +228,11 @@ class ShopManager {
         const selectedItems: ActiveTimedShopItem[] = [];
 
         for (let i = 0; i < itemCount; i++) {
-            const randomIndex = Math.floor(
-                Math.random() * availableItems.length
-            );
-
+            const randomIndex = Math.floor(Math.random() * availableItems.length);
             const [selected] = availableItems.splice(randomIndex, 1);
-
             const minStock = selected.item.stock?.min ?? 1;
             const maxStock = selected.item.stock?.max ?? minStock;
-
             const currentStock = Math.floor(Math.random() * (maxStock - minStock + 1)) + minStock;
-
             selectedItems.push({
                 ...selected,
                 item: {
@@ -287,13 +286,9 @@ class ShopManager {
 
             return false;
         }
-
         item.currentStock -= amount;
-
-        player.stats.remove(currency, totalCost);
-
+        player.stats.remove(currency, totalCost)
         player.give(item.item.typeId, (item.item.amount ?? 1) * amount);
-
         return true;
     }
     static getTimedShopStock(): ActiveTimedShopItem[] {

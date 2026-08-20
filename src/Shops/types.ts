@@ -53,7 +53,7 @@ export interface TimedShopItem {
         amount?: number;
         price: number;
         currency?: string;
-        stock: {
+        stock?: {
             min: number;
             max: number;
         };
@@ -88,8 +88,7 @@ export interface TimedShopItem {
         amount?: number;
         price: number;
         currency?: string;
-
-        stock: {
+        stock?: {
             min: number;
             max: number;
         };

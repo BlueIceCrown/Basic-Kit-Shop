@@ -35,7 +35,16 @@ const config = {
             // The types of items being sold.
             items: [
                 // item definitions. pretty self explanatory, the "info" object is the info displayed on the form. (like the description of the item when buying, and the button icon.)
-                { item: { typeId: 'minecraft:diamond', amount: 10, price: 100 }, info: { desc: null, icon: "textures/items/diamond" } }
+                { item: { typeId: 'minecraft:diamond', amount: 10, price: 100 }, info: { desc: null, icon: "textures/items/diamond" } },
+                { item: { typeId: 'minecraft:iron_ingot', amount: 16, price: 50 }, info: { desc: null, icon: "textures/items/iron_ingot" } },
+                { item: { typeId: 'minecraft:gold_ingot', amount: 16, price: 75 }, info: { desc: null, icon: "textures/items/gold_ingot" } },
+                { item: { typeId: 'minecraft:emerald', amount: 10, price: 125 }, info: { desc: null, icon: "textures/items/emerald" } },
+                { item: { typeId: 'minecraft:ender_pearl', amount: 4, price: 150 }, info: { desc: null, icon: "textures/items/ender_pearl" } },
+                { item: { typeId: 'minecraft:golden_apple', amount: 2, price: 200 }, info: { desc: null, icon: "textures/items/apple_golden" } },
+                { item: { typeId: 'minecraft:arrow', amount: 32, price: 50 }, info: { desc: null, icon: "textures/items/arrow" } },
+                { item: { typeId: 'minecraft:cooked_beef', amount: 16, price: 40 }, info: { desc: null, icon: "textures/items/beef_cooked" } },
+                { item: { typeId: 'minecraft:experience_bottle', amount: 16, price: 100 }, info: { desc: null, icon: "textures/items/experience_bottle" } },
+                { item: { typeId: 'minecraft:netherite_ingot', amount: 1, price: 500 }, info: { desc: null, icon: "textures/items/netherite_ingot" } }
             ]
         },
         leatherKitsShop: {
@@ -91,8 +100,20 @@ const config = {
             expiryTime: { days: 1, hours: 0, minutes: 0, seconds: 0 },
             items: [
                 // stock is how much of the item can be bought before its sold out. (min and max represent the random amount of stock the item can have when being put up in the shop.)
-                { item: { typeId: 'custom:powerhouse_kit', price: 5000, stock: { min: 1, max: 10 } }, info: { icon: "textures/items/diamond_chestplate" } },
-                { item: { typeId: 'custom:ranger_kit', price: 15000, stock: { min: 3, max: 5 } }, info: { icon: "textures/items/diamond_chestplate" } },
+                { item: { typeId: 'minecraft:golden_apple', amount: 2, price: 200 }, info: { desc: null, icon: "textures/items/apple_golden" } },
+                { item: { typeId: 'minecraft:arrow', amount: 32, price: 50, stock: { min: 5, max: 15 } }, info: { desc: null, icon: "textures/items/arrow" } },
+                { item: { typeId: 'minecraft:cooked_beef', amount: 16, price: 40, stock: { min: 5, max: 15 } }, info: { desc: null, icon: "textures/items/beef_cooked" } },
+                { item: { typeId: 'custom:basic_kit', price: 350, stock: { min: 8, max: 16 } }, info: { icon: "textures/items/leather_chestplate" } },
+                { item: { typeId: 'custom:advanced_kit', price: 525, stock: { min: 6, max: 12 } }, info: { icon: "textures/items/leather_chestplate" } },
+                { item: { typeId: 'custom:fighter_kit', price: 750, stock: { min: 5, max: 10 } }, info: { icon: "textures/items/chainmail_chestplate" } },
+                { item: { typeId: 'custom:warrior_kit', price: 1400, stock: { min: 4, max: 8 } }, info: { icon: "textures/items/chainmail_chestplate" } },
+                { item: { typeId: 'custom:champion_kit', price: 1750, stock: { min: 3, max: 7 } }, info: { icon: "textures/items/chainmail_chestplate" } },
+                { item: { typeId: 'custom:outstander_kit', price: 2250, stock: { min: 3, max: 6 } }, info: { icon: "textures/items/iron_chestplate" } },
+                { item: { typeId: 'custom:elite_kit', price: 3750, stock: { min: 2, max: 5 } }, info: { icon: "textures/items/iron_chestplate" } },
+                { item: { typeId: 'custom:legendary_kit', price: 5500, stock: { min: 2, max: 4 } }, info: { icon: "textures/items/iron_chestplate" } },
+                { item: { typeId: 'custom:powerhouse_kit', price: 7000, stock: { min: 2, max: 4 } }, info: { icon: "textures/items/diamond_chestplate" } },
+                { item: { typeId: 'custom:ranger_kit', price: 14000, stock: { min: 1, max: 3 } }, info: { icon: "textures/items/diamond_chestplate" } },
+                { item: { typeId: 'custom:ultimate_kit', price: 21000, stock: { min: 1, max: 2 } }, info: { icon: "textures/items/diamond_chestplate" } }
             ]
         } satisfies TimedShop
     },
